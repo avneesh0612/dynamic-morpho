@@ -1,0 +1,36 @@
+{
+  "name": "uniswap",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@coinbase/onchainkit": "^0.38.17",
+    "@dynamic-labs/ethereum": "^4.24.0",
+    "@dynamic-labs/global-wallet": "^4.24.0",
+    "@dynamic-labs/sdk-react-core": "^4.24.0",
+    "@dynamic-labs/wagmi-connector": "^4.24.0",
+    "@tanstack/react-query": "^5.83.0",
+    "crypto-browserify": "^3.12.1",
+    "next": "15.4.1",
+    "process": "^0.11.10",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "stream-browserify": "^3.0.0",
+    "viem": "^2.32.0",
+    "wagmi": "^2.15.7"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "@types/node": "^20.19.8",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "eslint": "^9.31.0",
+    "eslint-config-next": "15.4.1",
+    "@eslint/eslintrc": "^3.3.1"
+  }
+}
