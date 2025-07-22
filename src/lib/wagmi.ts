@@ -1,16 +1,12 @@
-import { http, createConfig } from "wagmi";
-import { base, baseSepolia, mainnet, sepolia } from "wagmi/chains";
+import { createConfig, http } from "wagmi";
+import { base } from "wagmi/chains";
 
 export const config = createConfig({
-  // make sure to update the chains in the dashboard
-  chains: [mainnet, sepolia, base, baseSepolia],
+  chains: [base],
   multiInjectedProviderDiscovery: false,
   ssr: true,
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
     [base.id]: http(),
-    [baseSepolia.id]: http(),
   },
 });
 

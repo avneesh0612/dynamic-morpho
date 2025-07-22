@@ -1,22 +1,22 @@
 "use client";
 
-import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
-import MorphoEarnPage from "./components/morpho";
+import Navigation from "../components/layout/Navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Main() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("/earn");
+  }, [router]);
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "#18181b",
-        flexDirection: "column",
-      }}
-    >
-      <DynamicWidget />
-      <MorphoEarnPage />
+    <div className="main-container">
+      <Navigation />
+      <div className="text-center" style={{ color: "var(--text-muted)" }}>
+        Redirecting to Earn page...
+      </div>
     </div>
   );
 }

@@ -1,0 +1,30 @@
+.balanceRow {
+  margin-top: 24px;
+  margin-bottom: 8px;
+  font-size: 16px;
+}
+
+.balanceLabel {
+  color: var(--text-muted);
+}
+
+.balanceValue {
+  font-weight: 700;
+  color: var(--text-white);
+}
+
+.healthFactor {
+  font-weight: 700;
+}
+
+.healthFactorGood {
+  color: var(--success);
+}
+
+.healthFactorWarning {
+  color: var(--warning);
+}
+
+.healthFactorDanger {
+  color: var(--error);
+}

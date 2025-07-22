@@ -6,11 +6,14 @@ A comprehensive technical guide for integrating Morpho lending vaults with Dynam
 
 ## Architecture Overview
 
-The lending flow consists of three main components:
+The lending flow consists of several modular components:
 
 1. **Dynamic MPC Wallet** - Provides embedded, non-custodial wallets
 2. **Morpho Protocol** - Decentralized lending protocol with optimized yields
 3. **Morpho GraphQL API** - Real-time vault data and user positions
+4. **Custom Hooks** - Encapsulated business logic for data fetching and operations
+5. **UI Components** - Reusable, focused components for different interface sections
+6. **Constants & Styles** - Centralized configuration and styling
 
 ## Setup and Dependencies
 
@@ -42,16 +45,83 @@ The wallet provides:
 - **Seamless UX** - No browser extensions required
 - **Balance tracking** - Real-time token balances
 
-## 2. Morpho Vault Configuration
+## 2. Project Structure
 
-Configure the vault address and token contracts:
+The refactored codebase follows a modular architecture:
 
-```typescript
-const MORPHO_USDC_VAULT_ADDRESS = "0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A";
-const USDC_ADDRESS = "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913";
+```
+src/
+├── lib/
+│   ├── constants.ts          # Contract addresses and configuration
+│   ├── styles.ts             # Centralized UI styles
+│   ├── hooks/                # Custom React hooks
+│   │   ├── useVaultData.ts   # Vault data fetching
+│   │   ├── useRewardsData.ts # Rewards data fetching
+│   │   ├── useVaultOperations.ts # Deposit/withdraw operations
+│   │   └── useRewardsOperations.ts # Claim operations
+│   └── [ABI files]           # Contract ABIs
+├── app/
+│   └── components/
+│       ├── morpho.tsx        # Main component (orchestrator)
+│       ├── ModeSelector.tsx  # Deposit/withdraw mode toggle
+│       ├── VaultForm.tsx     # Deposit/withdraw form
+│       ├── BalanceDisplay.tsx # Balance and rewards display
+│       └── StatusDisplay.tsx # Transaction status and errors
 ```
 
-## 3. Reading Vault Data
+## 3. Configuration
+
+All contract addresses and configuration are centralized in `src/lib/constants.ts`:
+
+```typescript
+export const CONTRACTS = {
+  MORPHO_USDC_VAULT: "0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A",
+  USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  REWARDS_DISTRIBUTOR: "0x3B14E5C73e0a56D607A8688098326fD4b4292135",
+};
+```
+
+## 4. Custom Hooks
+
+The application uses custom hooks to encapsulate business logic and state management:
+
+### useVaultData
+
+Fetches and manages vault position data from the Morpho GraphQL API:
+
+```typescript
+const vaultData = useVaultData(address);
+// Returns: { userAssets, userAssetsUsd, vaultName, vaultSymbol }
+```
+
+### useRewardsData
+
+Manages rewards data and token information:
+
+```typescript
+const rewardsData = useRewardsData(address);
+// Returns: { rewardBalance, rewardToken, rewardTokenSymbol }
+```
+
+### useVaultOperations
+
+Handles all vault operations (deposit, withdraw, approve):
+
+```typescript
+const vaultOps = useVaultOperations(address);
+// Returns: { amount, setAmount, handleDeposit, handleWithdraw, handleApprove, ... }
+```
+
+### useRewardsOperations
+
+Manages reward claiming operations:
+
+```typescript
+const rewardsOps = useRewardsOperations();
+// Returns: { handleClaimReward, isClaiming, claimError, ... }
+```
+
+## 5. Reading Vault Data
 
 ### Fetch User Position
 
@@ -110,7 +180,7 @@ const fetchUserPosition = async (userAddress: string) => {
 };
 ```
 
-## 4. Contract Interactions
+## 6. Contract Interactions
 
 ### Reading Balances and Allowances
 
@@ -176,7 +246,7 @@ const needsApproval = (amount: string) => {
 };
 ```
 
-## 5. Deposit Operations
+## 7. Deposit Operations
 
 Deposit assets into the Morpho vault:
 
@@ -201,7 +271,7 @@ const handleDeposit = async (amount: string) => {
 };
 ```
 
-## 6. Withdraw Operations
+## 8. Withdraw Operations
 
 Withdraw assets from the Morpho vault:
 
@@ -230,7 +300,7 @@ const handleWithdraw = async (amount: string) => {
 };
 ```
 
-## Network Configuration
+## 10. Network Configuration
 
 Base network (Chain ID: 8453):
 
@@ -238,7 +308,7 @@ Base network (Chain ID: 8453):
 - **Morpho USDC Vault**: `0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A`
 - **Morpho GraphQL API**: `https://api.morpho.org/graphql`
 
-## Transaction Flow Summary
+## 11. Transaction Flow Summary
 
 1. User connects via Dynamic MPC wallet
 2. Select deposit or withdraw mode
@@ -248,7 +318,7 @@ Base network (Chain ID: 8453):
 6. Display transaction status and updated balances
 7. Query GraphQL API for real-time position data
 
-## Getting Started
+## 12. Getting Started
 
 First, run the development server:
 
@@ -258,15 +328,86 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-## Key Features
+## 13. Key Features
 
 - **ERC-4626 Compliance** - Standard vault interface for deposits/withdrawals
 - **Real-time Data** - GraphQL API integration for live vault metrics
 - **Optimized Yields** - Morpho's lending optimization algorithms
 - **Non-custodial** - Dynamic MPC wallets maintain user control
 
-## References
+## 9. Rewards Integration
+
+Morpho vaults distribute MORPHO tokens as rewards to users who provide liquidity. This integration includes:
+
+### Rewards Contract Configuration
+
+```typescript
+const REWARDS_DISTRIBUTOR_ADDRESS =
+  "0x3B14E5C73e0a56D607A8688098326fD4b4292135";
+```
+
+### Reading Reward Balances
+
+```typescript
+// Read user's reward balance
+const { data: userRewardBalance } = useReadContract({
+  address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+  abi: REWARDS_ABI,
+  functionName: "getUserRewardBalance",
+  args: address ? [address, MORPHO_USDC_VAULT_ADDRESS] : undefined,
+  query: { enabled: !!address },
+});
+
+// Read reward token information
+const { data: rewardTokenAddress } = useReadContract({
+  address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+  abi: REWARDS_ABI,
+  functionName: "getRewardToken",
+  args: [MORPHO_USDC_VAULT_ADDRESS],
+});
+
+const { data: rewardTokenSymbol } = useReadContract({
+  address: rewardTokenAddress as `0x${string}`,
+  abi: ERC20_ABI,
+  functionName: "symbol",
+  query: { enabled: !!rewardTokenAddress },
+});
+```
+
+### Claiming Rewards
+
+```typescript
+const {
+  writeContract: writeClaimReward,
+  isPending: isClaiming,
+  error: claimError,
+} = useWriteContract();
+
+const handleClaimReward = async () => {
+  try {
+    await writeClaimReward({
+      address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+      abi: REWARDS_ABI,
+      functionName: "claimReward",
+      args: [MORPHO_USDC_VAULT_ADDRESS],
+    });
+  } catch (error) {
+    console.error("Claim failed:", error);
+  }
+};
+```
+
+### Rewards UI
+
+The interface displays:
+
+- Current reward balance in MORPHO tokens
+- Claim button (only shown when rewards > 0)
+- Real-time updates after successful claims
+
+## 14. References
 
 - [Dynamic Documentation](https://docs.dynamic.xyz)
 - [Depositing and withdrawing from Morpho vaults](https://docs.morpho.org/build/earn/tutorials/assets-flow)
 - [Getting Morpho data](https://docs.morpho.org/build/earn/tutorials/get-data)
+- [Morpho rewards tutorials](https://docs.morpho.org/build/earn/tutorials/rewards)

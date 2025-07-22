@@ -1,0 +1,181 @@
+.vaultCard {
+  background: var(--secondary);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  display: block;
+}
+
+.vaultCard:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.vaultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.vaultTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vaultName {
+  color: var(--text-white);
+  font-weight: 700;
+  font-size: 18px;
+  margin: 0;
+}
+
+.whitelistBadge {
+  background: var(--success);
+  color: var(--text-white);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  align-self: flex-start;
+}
+
+.vaultApyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.vaultNetApy {
+  color: var(--success);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.vaultBaseApy {
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.vaultDescription {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+  margin: 0 0 16px 0;
+}
+
+.vaultStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.vaultStat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.vaultStatLabel {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.vaultStatValue {
+  color: var(--text-white);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vaultRewards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.vaultRewardsLabel {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.vaultReward {
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 500;
+  background: rgba(var(--primary-rgb), 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.vaultFooter {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.vaultLink {
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.vaultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.loadingContainer {
+  margin-top: 32px;
+  padding: 32px;
+  background: var(--secondary);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.errorContainer {
+  margin-top: 32px;
+  padding: 16px;
+  background: var(--error-bg);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--error);
+  border: 1px solid var(--error);
+}
+
+.noVaultsContainer {
+  margin-top: 32px;
+  padding: 32px;
+  background: var(--secondary);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 16px;
+}
+
+.warningContainer {
+  margin-top: 32px;
+  padding: 16px;
+  background: var(--error-bg);
+  border-radius: 8px;
+  text-align: center;
+  color: var(--warning);
+}

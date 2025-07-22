@@ -1,0 +1,29 @@
+export const CONTRACTS = {
+  MORPHO_USDC_VAULT: "0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A",
+  USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  REWARDS_DISTRIBUTOR: "0x3B14E5C73e0a56D607A8688098326fD4b4292135",
+  MORPHO_MARKETS: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+} as const;
+
+export const MARKET_PARAMS = {
+  loanToken: "0x4200000000000000000000000000000000000006",
+  collateralToken: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+  oracle: "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+  irm: "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
+  lltv: BigInt("850000000000000000"),
+} as const;
+
+export const NETWORK = {
+  CHAIN_ID: 8453,
+  NAME: "Base",
+} as const;
+
+export const API = {
+  MORPHO_GRAPHQL: "https://api.morpho.org/graphql",
+} as const;
+
+export const DECIMALS = {
+  USDC: 6,
+  MORPHO: 18,
+  WETH: 18,
+} as const;
