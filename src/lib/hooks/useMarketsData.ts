@@ -118,43 +118,37 @@ export function useMarketsData(address: string | undefined): MarketsData {
         }
 
         const positions = result.data?.marketPositions?.items || [];
-        const wethUsdcPosition = positions[0];
+        const marketPosition = positions[0];
 
-        if (wethUsdcPosition) {
+        if (marketPosition) {
           // Format the values - API returns numbers, so we need to convert to BigInt
           const borrowedAmount = formatUnits(
-            BigInt(wethUsdcPosition.state.borrowAssets),
+            BigInt(marketPosition.state.borrowAssets),
             DECIMALS.WETH
           );
           const suppliedAmount = formatUnits(
-            BigInt(wethUsdcPosition.state.supplyAssets),
-            DECIMALS.USDC
+            BigInt(marketPosition.state.supplyAssets),
+            6 // Collateral decimals
           );
 
           setBorrowed(borrowedAmount);
           setSupplied(suppliedAmount);
-          setBorrowedUsd(
-            `$${wethUsdcPosition.state.borrowAssetsUsd.toFixed(2)}`
-          );
-          setSuppliedUsd(
-            `$${wethUsdcPosition.state.supplyAssetsUsd.toFixed(2)}`
-          );
+          setBorrowedUsd(`$${marketPosition.state.borrowAssetsUsd.toFixed(2)}`);
+          setSuppliedUsd(`$${marketPosition.state.supplyAssetsUsd.toFixed(2)}`);
 
           // Format collateral amount
           const collateralAmount6 = formatUnits(
-            BigInt(wethUsdcPosition.state.collateral),
+            BigInt(marketPosition.state.collateral),
             6
           );
 
-          // Use the correct format - if 5000000 should be 5 USDC, use 6 decimals
+          // Use the correct format - if 5000000 should be 5 collateral, use 6 decimals
           setCollateral(collateralAmount6);
-          setCollateralUsd(
-            `$${wethUsdcPosition.state.collateralUsd.toFixed(2)}`
-          );
+          setCollateralUsd(`$${marketPosition.state.collateralUsd.toFixed(2)}`);
 
           // Calculate health factor using collateral
-          const borrowedUsdValue = wethUsdcPosition.state.borrowAssetsUsd;
-          const collateralUsdValue = wethUsdcPosition.state.collateralUsd;
+          const borrowedUsdValue = marketPosition.state.borrowAssetsUsd;
+          const collateralUsdValue = marketPosition.state.collateralUsd;
           let healthFactor = null;
 
           if (collateralUsdValue > 0 && borrowedUsdValue > 0) {

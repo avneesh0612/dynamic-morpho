@@ -1,28 +1,27 @@
 import React from "react";
-import { Button } from "../ui/Button";
-import { Input } from "../ui/Input";
-import styles from "./MarketsForm.module.css";
+import { Button } from "./Button";
+import { Input } from "./Input";
 
 // Market mode configuration
 const MARKET_MODE_CONFIG = {
   supply: {
-    placeholder: "Amount in USDC",
-    buttonText: "Supply USDC",
+    placeholder: "Amount in Collateral",
+    buttonText: "Supply Collateral",
     loadingText: "Supplying...",
   },
   withdraw: {
-    placeholder: "Amount in USDC",
-    buttonText: "Withdraw USDC",
+    placeholder: "Amount in Collateral",
+    buttonText: "Withdraw Collateral",
     loadingText: "Withdrawing...",
   },
   borrow: {
-    placeholder: "Amount in WETH",
-    buttonText: "Borrow WETH",
+    placeholder: "Amount in Loan Token",
+    buttonText: "Borrow Loan Token",
     loadingText: "Borrowing...",
   },
   repay: {
-    placeholder: "Amount in WETH",
-    buttonText: "Repay WETH",
+    placeholder: "Amount in Loan Token",
+    buttonText: "Repay Loan Token",
     loadingText: "Repaying...",
   },
 } as const;
@@ -32,17 +31,19 @@ interface MarketsFormProps {
   amount: string;
   onAmountChange: (amount: string) => void;
   onSubmit: (e: React.FormEvent) => void;
-  onApproveWeth?: () => void;
-  onApproveUsdc?: () => void;
+  onApproveLoanToken?: () => void;
+  onApproveCollateral?: () => void;
   isConnected: boolean;
   isSupplying: boolean;
   isWithdrawing: boolean;
   isBorrowing: boolean;
   isRepaying: boolean;
-  isApprovingWeth: boolean;
-  isApprovingUsdc: boolean;
-  needsWethApproval: boolean;
-  needsUsdcApproval: boolean;
+  isApprovingLoanToken: boolean;
+  isApprovingCollateral: boolean;
+  needsLoanTokenApproval: boolean;
+  needsCollateralApproval: boolean;
+  loanTokenSymbol?: string;
+  collateralSymbol?: string;
 }
 
 export function MarketsForm({
@@ -50,17 +51,19 @@ export function MarketsForm({
   amount,
   onAmountChange,
   onSubmit,
-  onApproveWeth,
-  onApproveUsdc,
+  onApproveLoanToken,
+  onApproveCollateral,
   isConnected,
   isSupplying,
   isWithdrawing,
   isBorrowing,
   isRepaying,
-  isApprovingWeth,
-  isApprovingUsdc,
-  needsWethApproval,
-  needsUsdcApproval,
+  isApprovingLoanToken,
+  isApprovingCollateral,
+  needsLoanTokenApproval,
+  needsCollateralApproval,
+  loanTokenSymbol = "Loan Token",
+  collateralSymbol = "Collateral",
 }: MarketsFormProps) {
   const config = MARKET_MODE_CONFIG[mode];
   const isPending = isSupplying || isWithdrawing || isBorrowing || isRepaying;
@@ -73,15 +76,19 @@ export function MarketsForm({
   };
   const needsApproval =
     mode === "borrow" || mode === "repay"
-      ? needsWethApproval
-      : needsUsdcApproval;
+      ? needsLoanTokenApproval
+      : needsCollateralApproval;
   const isApproving =
-    mode === "borrow" || mode === "repay" ? isApprovingWeth : isApprovingUsdc;
+    mode === "borrow" || mode === "repay"
+      ? isApprovingLoanToken
+      : isApprovingCollateral;
   const onApprove =
-    mode === "borrow" || mode === "repay" ? onApproveWeth : onApproveUsdc;
+    mode === "borrow" || mode === "repay"
+      ? onApproveLoanToken
+      : onApproveCollateral;
 
   return (
-    <form onSubmit={onSubmit} className={styles.form}>
+    <form onSubmit={onSubmit} className="flex flex-col gap-3.5">
       <Input
         type="number"
         min={0}
@@ -94,7 +101,11 @@ export function MarketsForm({
 
       {needsApproval && onApprove && (
         <Button variant="approve" loading={isApproving} onClick={onApprove}>
-          {`Approve ${mode === "borrow" || mode === "repay" ? "WETH" : "USDC"}`}
+          {`Approve ${
+            mode === "borrow" || mode === "repay"
+              ? loanTokenSymbol
+              : collateralSymbol
+          }`}
         </Button>
       )}
 

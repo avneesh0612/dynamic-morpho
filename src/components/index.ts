@@ -1,21 +1,15 @@
 // UI Components
-export { Button, Input } from "./ui";
+export { Button } from "./Button";
+export { Input } from "./Input";
 
 // Layout Components
-export { Navigation, NetworkStatus } from "./layout";
+export { default as Navigation } from "./Navigation";
 
 // Form Components
-export { VaultForm, MarketsForm } from "./forms";
+export { MarketsForm } from "./MarketsForm";
 
 // Display Components
-export {
-  BalanceDisplay,
-  StatusDisplay,
-  MarketsBalanceDisplay,
-} from "./displays";
+export { MarketsBalanceDisplay } from "./MarketsBalanceDisplay";
 
 // Selector Components
-export { ModeSelector, MarketsModeSelector } from "./selectors";
-
-// Page Components
-export { MorphoEarnPage } from "./pages";
+export { MarketsModeSelector } from "./MarketsModeSelector";

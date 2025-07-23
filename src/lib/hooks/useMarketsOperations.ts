@@ -2,14 +2,17 @@ import { useState } from "react";
 import { parseUnits } from "viem";
 import { useReadContract, useWriteContract } from "wagmi";
 import { ERC20_ABI, MORPHO_MARKETS_ABI } from "../ABIs";
-import { CONTRACTS, DECIMALS, MARKET_PARAMS } from "../constants";
+import { CONTRACTS, MARKET_PARAMS } from "../constants";
 
-export function useMarketsOperations(address: string | undefined) {
+export function useMarketsOperations(
+  address: string | undefined,
+  loanTokenDecimals: number = 18
+) {
   const [amount, setAmount] = useState("");
   const [txStatus, setTxStatus] = useState("");
 
-  // Read WETH balance
-  const { data: wethBalance } = useReadContract({
+  // Read loan token balance
+  const { data: loanTokenBalance } = useReadContract({
     address: MARKET_PARAMS.loanToken as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "balanceOf",
@@ -17,8 +20,8 @@ export function useMarketsOperations(address: string | undefined) {
     query: { enabled: !!address },
   });
 
-  // Read USDC balance for collateral
-  const { data: usdcBalance } = useReadContract({
+  // Read collateral balance
+  const { data: collateralBalance } = useReadContract({
     address: MARKET_PARAMS.collateralToken as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "balanceOf",
@@ -27,7 +30,7 @@ export function useMarketsOperations(address: string | undefined) {
   });
 
   // Read allowances
-  const { data: wethAllowance } = useReadContract({
+  const { data: loanTokenAllowance } = useReadContract({
     address: MARKET_PARAMS.loanToken as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "allowance",
@@ -37,7 +40,7 @@ export function useMarketsOperations(address: string | undefined) {
     query: { enabled: !!address },
   });
 
-  const { data: usdcAllowance } = useReadContract({
+  const { data: collateralAllowance } = useReadContract({
     address: MARKET_PARAMS.collateralToken as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "allowance",
@@ -49,14 +52,14 @@ export function useMarketsOperations(address: string | undefined) {
 
   // Write contracts
   const {
-    writeContract: writeApproveWeth,
-    isPending: isApprovingWeth,
-    error: approveWethError,
+    writeContract: writeApproveLoanToken,
+    isPending: isApprovingLoanToken,
+    error: approveLoanTokenError,
   } = useWriteContract();
   const {
-    writeContract: writeApproveUsdc,
-    isPending: isApprovingUsdc,
-    error: approveUsdcError,
+    writeContract: writeApproveCollateral,
+    isPending: isApprovingCollateral,
+    error: approveCollateralError,
   } = useWriteContract();
   const {
     writeContract: writeSupply,
@@ -80,22 +83,22 @@ export function useMarketsOperations(address: string | undefined) {
   } = useWriteContract();
 
   // Approve functions
-  const handleApproveWeth = async () => {
+  const handleApproveLoanToken = async () => {
     setTxStatus("");
     try {
-      await writeApproveWeth({
+      await writeApproveLoanToken({
         address: MARKET_PARAMS.loanToken as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [
           CONTRACTS.MORPHO_MARKETS as `0x${string}`,
-          parseUnits(amount, DECIMALS.WETH),
+          parseUnits(amount, loanTokenDecimals),
         ],
       });
-      setTxStatus("WETH approval transaction sent!");
+      setTxStatus("Loan token approval transaction sent!");
     } catch (e: unknown) {
       setTxStatus(
-        "WETH approval failed: " +
+        "Loan token approval failed: " +
           (e && typeof e === "object" && "message" in e
             ? (e as { message?: string }).message
             : String(e))
@@ -103,22 +106,22 @@ export function useMarketsOperations(address: string | undefined) {
     }
   };
 
-  const handleApproveUsdc = async () => {
+  const handleApproveCollateral = async () => {
     setTxStatus("");
     try {
-      await writeApproveUsdc({
+      await writeApproveCollateral({
         address: MARKET_PARAMS.collateralToken as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
         args: [
           CONTRACTS.MORPHO_MARKETS as `0x${string}`,
-          parseUnits(amount, DECIMALS.USDC),
+          parseUnits(amount, 6), // Collateral decimals
         ],
       });
-      setTxStatus("USDC approval transaction sent!");
+      setTxStatus("Collateral approval transaction sent!");
     } catch (e: unknown) {
       setTxStatus(
-        "USDC approval failed: " +
+        "Collateral approval failed: " +
           (e && typeof e === "object" && "message" in e
             ? (e as { message?: string }).message
             : String(e))
@@ -137,7 +140,7 @@ export function useMarketsOperations(address: string | undefined) {
         functionName: "supply",
         args: [
           MARKET_PARAMS.collateralToken as `0x${string}`,
-          parseUnits(amount, DECIMALS.USDC),
+          parseUnits(amount, 6), // Collateral decimals
           address as `0x${string}`,
           BigInt(5), // maxIterations
         ],
@@ -163,7 +166,7 @@ export function useMarketsOperations(address: string | undefined) {
         functionName: "withdraw",
         args: [
           MARKET_PARAMS.collateralToken as `0x${string}`,
-          parseUnits(amount, DECIMALS.USDC),
+          parseUnits(amount, 6), // Collateral decimals
           address as `0x${string}`,
           address as `0x${string}`,
         ],
@@ -189,7 +192,7 @@ export function useMarketsOperations(address: string | undefined) {
         functionName: "borrow",
         args: [
           MARKET_PARAMS.loanToken as `0x${string}`,
-          parseUnits(amount, DECIMALS.WETH),
+          parseUnits(amount, loanTokenDecimals),
           address as `0x${string}`,
           BigInt(5), // maxIterations
         ],
@@ -215,7 +218,7 @@ export function useMarketsOperations(address: string | undefined) {
         functionName: "repay",
         args: [
           MARKET_PARAMS.loanToken as `0x${string}`,
-          parseUnits(amount, DECIMALS.WETH),
+          parseUnits(amount, loanTokenDecimals),
           address as `0x${string}`,
         ],
       });
@@ -231,41 +234,42 @@ export function useMarketsOperations(address: string | undefined) {
   };
 
   // Check if approvals are needed
-  const needsWethApproval =
-    wethAllowance !== undefined &&
-    parseUnits(amount || "0", DECIMALS.WETH) > (wethAllowance as bigint);
-  const needsUsdcApproval =
-    usdcAllowance !== undefined &&
-    parseUnits(amount || "0", DECIMALS.USDC) > (usdcAllowance as bigint);
+  const needsLoanTokenApproval =
+    loanTokenAllowance !== undefined &&
+    parseUnits(amount || "0", loanTokenDecimals) >
+      (loanTokenAllowance as bigint);
+  const needsCollateralApproval =
+    collateralAllowance !== undefined &&
+    parseUnits(amount || "0", 6) > (collateralAllowance as bigint); // Collateral decimals
 
   return {
     amount,
     setAmount,
     txStatus,
     setTxStatus,
-    wethBalance,
-    usdcBalance,
-    wethAllowance,
-    usdcAllowance,
-    isApprovingWeth,
-    isApprovingUsdc,
+    loanTokenBalance,
+    collateralBalance,
+    loanTokenAllowance,
+    collateralAllowance,
+    isApprovingLoanToken,
+    isApprovingCollateral,
     isSupplying,
     isWithdrawing,
     isBorrowing,
     isRepaying,
-    approveWethError,
-    approveUsdcError,
+    approveLoanTokenError,
+    approveCollateralError,
     supplyError,
     withdrawError,
     borrowError,
     repayError,
-    handleApproveWeth,
-    handleApproveUsdc,
+    handleApproveLoanToken,
+    handleApproveCollateral,
     handleSupply,
     handleWithdraw,
     handleBorrow,
     handleRepay,
-    needsWethApproval,
-    needsUsdcApproval,
+    needsLoanTokenApproval,
+    needsCollateralApproval,
   };
 }

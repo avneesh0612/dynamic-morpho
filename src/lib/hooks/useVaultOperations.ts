@@ -2,41 +2,66 @@ import { useState } from "react";
 import { parseUnits } from "viem";
 import { useReadContract, useWriteContract } from "wagmi";
 import { ERC20_ABI, ERC4626_ABI } from "../ABIs";
-import { CONTRACTS, DECIMALS } from "../constants";
 import { createTxStatusMessage, formatErrorMessage } from "../utils";
 
-export function useVaultOperations(address: string | undefined) {
+interface VaultInfo {
+  address: string;
+  asset: {
+    address: string;
+    symbol: string;
+    decimals: number;
+  };
+}
+
+export function useVaultOperations(
+  address: string | undefined,
+  vaultInfo: VaultInfo | null
+) {
   const [amount, setAmount] = useState("");
   const [txStatus, setTxStatus] = useState("");
 
-  // Read USDC balance
-  const { data: usdcBalance } = useReadContract({
-    address: CONTRACTS.USDC as `0x${string}`,
+  // Read asset balance
+  const { data: assetBalance } = useReadContract({
+    address: vaultInfo?.asset.address as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!vaultInfo?.asset.address },
   });
 
   // Read vault share balance
   const { data: vaultBalance } = useReadContract({
-    address: CONTRACTS.MORPHO_USDC_VAULT as `0x${string}`,
+    address: vaultInfo?.address as `0x${string}`,
     abi: ERC4626_ABI,
     functionName: "balanceOf",
     args: address ? [address] : undefined,
-    query: { enabled: !!address },
+    query: { enabled: !!address && !!vaultInfo?.address },
+  });
+
+  // Read user's deposited assets (convert shares to assets)
+  const { data: depositedAssets } = useReadContract({
+    address: vaultInfo?.address as `0x${string}`,
+    abi: ERC4626_ABI,
+    functionName: "convertToAssets",
+    args: vaultBalance ? [vaultBalance] : undefined,
+    query: { enabled: !!vaultInfo?.address && !!vaultBalance },
   });
 
   // Read allowance
   const { data: allowance } = useReadContract({
-    address: CONTRACTS.USDC as `0x${string}`,
+    address: vaultInfo?.asset.address as `0x${string}`,
     abi: ERC20_ABI,
     functionName: "allowance",
-    args: address ? [address, CONTRACTS.MORPHO_USDC_VAULT] : undefined,
-    query: { enabled: !!address },
+    args:
+      address && vaultInfo?.asset.address && vaultInfo?.address
+        ? [address, vaultInfo.address]
+        : undefined,
+    query: {
+      enabled: !!address && !!vaultInfo?.asset.address && !!vaultInfo?.address,
+    },
   });
 
-  // Approve USDC
+  // Approve asset
   const {
     writeContract: writeApprove,
     isPending: isApproving,
@@ -58,13 +83,15 @@ export function useVaultOperations(address: string | undefined) {
   } = useWriteContract();
 
   const handleApprove = async () => {
+    if (!vaultInfo?.asset.address || !vaultInfo?.address) return;
+
     setTxStatus("");
     try {
       await writeApprove({
-        address: CONTRACTS.USDC as `0x${string}`,
+        address: vaultInfo.asset.address as `0x${string}`,
         abi: ERC20_ABI,
         functionName: "approve",
-        args: [CONTRACTS.MORPHO_USDC_VAULT, parseUnits(amount, DECIMALS.USDC)],
+        args: [vaultInfo.address, parseUnits(amount, vaultInfo.asset.decimals)],
       });
       setTxStatus(createTxStatusMessage("Approval", true));
     } catch (e: unknown) {
@@ -75,14 +102,16 @@ export function useVaultOperations(address: string | undefined) {
   };
 
   const handleDeposit = async (e: React.FormEvent) => {
+    if (!vaultInfo?.address || !address) return;
+
     e.preventDefault();
     setTxStatus("");
     try {
       await writeDeposit({
-        address: CONTRACTS.MORPHO_USDC_VAULT as `0x${string}`,
+        address: vaultInfo.address as `0x${string}`,
         abi: ERC4626_ABI,
         functionName: "deposit",
-        args: [parseUnits(amount, DECIMALS.USDC), address],
+        args: [parseUnits(amount, vaultInfo.asset.decimals), address],
       });
       setTxStatus(createTxStatusMessage("Deposit", true));
     } catch (e: unknown) {
@@ -93,14 +122,16 @@ export function useVaultOperations(address: string | undefined) {
   };
 
   const handleWithdraw = async (e: React.FormEvent) => {
+    if (!vaultInfo?.address || !address) return;
+
     e.preventDefault();
     setTxStatus("");
     try {
       await writeWithdraw({
-        address: CONTRACTS.MORPHO_USDC_VAULT as `0x${string}`,
+        address: vaultInfo.address as `0x${string}`,
         abi: ERC4626_ABI,
         functionName: "withdraw",
-        args: [parseUnits(amount, DECIMALS.USDC), address, address],
+        args: [parseUnits(amount, vaultInfo.asset.decimals), address, address],
       });
       setTxStatus(createTxStatusMessage("Withdraw", true));
     } catch (e: unknown) {
@@ -111,16 +142,20 @@ export function useVaultOperations(address: string | undefined) {
   };
 
   const needsApproval =
-    allowance !== undefined &&
-    parseUnits(amount || "0", DECIMALS.USDC) > (allowance as bigint);
+    (allowance !== undefined &&
+      vaultInfo?.asset.decimals &&
+      parseUnits(amount || "0", vaultInfo.asset.decimals) >
+        (allowance as bigint)) ||
+    false;
 
   return {
     amount,
     setAmount,
     txStatus,
     setTxStatus,
-    usdcBalance,
+    assetBalance,
     vaultBalance,
+    depositedAssets,
     allowance,
     isApproving,
     isDepositing,

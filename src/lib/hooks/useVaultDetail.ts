@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { API, NETWORK } from "../constants";
+import { API } from "../constants";
 
 export interface VaultDetail {
   id: string;
@@ -7,6 +7,8 @@ export interface VaultDetail {
   name: string;
   symbol: string;
   asset: string;
+  assetAddress: string;
+  assetDecimals: number;
   apy: string;
   netApy: string;
   tvl: string;
@@ -218,6 +220,8 @@ export function useVaultDetail(vaultId: string | undefined) {
             vaultData.name || `${vaultData.asset?.symbol || "Unknown"} Vault`,
           symbol: vaultData.symbol,
           asset: vaultData.asset?.symbol || "Unknown",
+          assetAddress: vaultData.asset?.address || "",
+          assetDecimals: vaultData.asset?.decimals || 6,
           apy,
           netApy,
           tvl,

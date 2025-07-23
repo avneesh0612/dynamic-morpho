@@ -3,7 +3,7 @@ import { useWriteContract } from "wagmi";
 import { CONTRACTS } from "../constants";
 import { REWARDS_ABI } from "../ABIs";
 
-export function useRewardsOperations() {
+export function useRewardsOperations(vaultAddress?: string) {
   const [claimTxStatus, setClaimTxStatus] = useState("");
 
   // Claim rewards
@@ -14,13 +14,15 @@ export function useRewardsOperations() {
   } = useWriteContract();
 
   const handleClaimReward = async () => {
+    if (!vaultAddress) return;
+    
     setClaimTxStatus("");
     try {
       await writeClaimReward({
         address: CONTRACTS.REWARDS_DISTRIBUTOR as `0x${string}`,
         abi: REWARDS_ABI,
         functionName: "claimReward",
-        args: [CONTRACTS.MORPHO_USDC_VAULT as `0x${string}`],
+        args: [vaultAddress as `0x${string}`],
       });
       setClaimTxStatus("Reward claim transaction sent!");
     } catch (e: unknown) {

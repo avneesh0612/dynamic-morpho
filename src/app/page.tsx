@@ -1,6 +1,5 @@
 "use client";
 
-import Navigation from "../components/layout/Navigation";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -12,11 +11,6 @@ export default function Main() {
   }, [router]);
 
   return (
-    <div className="main-container">
-      <Navigation />
-      <div className="text-center" style={{ color: "var(--text-muted)" }}>
-        Redirecting to Earn page...
-      </div>
-    </div>
+    <div className="text-center text-gray-400">Redirecting to Earn page...</div>
   );
 }

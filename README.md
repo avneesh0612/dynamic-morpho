@@ -13,12 +13,23 @@ The lending flow consists of several modular components:
 3. **Morpho GraphQL API** - Real-time vault data and user positions
 4. **Custom Hooks** - Encapsulated business logic for data fetching and operations
 5. **UI Components** - Reusable, focused components for different interface sections
-6. **Constants & Styles** - Centralized configuration and styling
+6. **Constants & Configuration** - Centralized configuration and styling
 
 ## Setup and Dependencies
 
 ```bash
-bun install @dynamic-labs/sdk-react-core wagmi viem
+bun install
+```
+
+Key dependencies:
+
+```json
+{
+  "@dynamic-labs/sdk-react-core": "^4.25.3",
+  "wagmi": "^2.16.0",
+  "viem": "^2.33.0",
+  "next": "15.4.1"
+}
 ```
 
 Key imports:
@@ -47,26 +58,47 @@ The wallet provides:
 
 ## 2. Project Structure
 
-The refactored codebase follows a modular architecture:
+The codebase follows a modular architecture:
 
 ```
 src/
-├── lib/
-│   ├── constants.ts          # Contract addresses and configuration
-│   ├── styles.ts             # Centralized UI styles
-│   ├── hooks/                # Custom React hooks
-│   │   ├── useVaultData.ts   # Vault data fetching
-│   │   ├── useRewardsData.ts # Rewards data fetching
-│   │   ├── useVaultOperations.ts # Deposit/withdraw operations
-│   │   └── useRewardsOperations.ts # Claim operations
-│   └── [ABI files]           # Contract ABIs
 ├── app/
-│   └── components/
-│       ├── morpho.tsx        # Main component (orchestrator)
-│       ├── ModeSelector.tsx  # Deposit/withdraw mode toggle
-│       ├── VaultForm.tsx     # Deposit/withdraw form
-│       ├── BalanceDisplay.tsx # Balance and rewards display
-│       └── StatusDisplay.tsx # Transaction status and errors
+│   ├── borrow/
+│   │   └── page.tsx           # Borrow page
+│   ├── earn/
+│   │   ├── page.tsx           # Earn page (vaults list)
+│   │   └── [vaultId]/
+│   │       └── page.tsx       # Individual vault page
+│   ├── layout.tsx             # Root layout
+│   ├── page.tsx               # Home page
+│   └── globals.css            # Global styles
+├── components/
+│   ├── Button.tsx
+│   ├── Input.tsx
+│   ├── MarketsBalanceDisplay.tsx
+│   ├── MarketsForm.tsx
+│   ├── MarketsModeSelector.tsx
+│   ├── Navigation.tsx
+│   └── index.ts
+└── lib/
+    ├── ABIs/
+    │   ├── ERC20_ABI.ts
+    │   ├── ERC4626_ABI.ts
+    │   ├── MORPHO_MARKETS_ABI.ts
+    │   ├── REWARDS_ABI.ts
+    │   └── index.ts
+    ├── constants.ts           # Contract addresses and configuration
+    ├── hooks/
+    │   ├── useMarketsData.ts
+    │   ├── useMarketsOperations.ts
+    │   ├── useRewardsOperations.ts
+    │   ├── useVaultDetail.ts
+    │   ├── useVaultOperations.ts
+    │   ├── useVaultsList.ts
+    │   └── index.ts
+    ├── providers.tsx
+    ├── utils.ts
+    └── wagmi.ts
 ```
 
 ## 3. Configuration
@@ -75,41 +107,75 @@ All contract addresses and configuration are centralized in `src/lib/constants.t
 
 ```typescript
 export const CONTRACTS = {
-  MORPHO_USDC_VAULT: "0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A",
-  USDC: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
   REWARDS_DISTRIBUTOR: "0x3B14E5C73e0a56D607A8688098326fD4b4292135",
-};
+  MORPHO_MARKETS: "0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb",
+} as const;
+
+export const MARKET_PARAMS = {
+  loanToken: "0x4200000000000000000000000000000000000006", // WETH
+  collateralToken: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // USDC
+  oracle: "0x71041dddad3595F9CEd3DcCFBe3D1F4b0a16Bb70",
+  irm: "0x870aC11D48B15DB9a138Cf899d20F13F79Ba00BC",
+  lltv: BigInt("850000000000000000"), // 85%
+} as const;
+
+export const NETWORK = {
+  CHAIN_ID: 8453,
+  NAME: "Base",
+} as const;
+
+export const API = {
+  MORPHO_GRAPHQL: "https://api.morpho.org/graphql",
+} as const;
 ```
 
 ## 4. Custom Hooks
 
 The application uses custom hooks to encapsulate business logic and state management:
 
-### useVaultData
+### useMarketsData
 
-Fetches and manages vault position data from the Morpho GraphQL API:
+Fetches and manages markets data from the Morpho GraphQL API:
 
 ```typescript
-const vaultData = useVaultData(address);
-// Returns: { userAssets, userAssetsUsd, vaultName, vaultSymbol }
+const marketsData = useMarketsData(address);
+// Returns: { userAssets, userAssetsUsd, marketName, marketSymbol }
 ```
 
-### useRewardsData
+### useVaultsList
 
-Manages rewards data and token information:
+Manages vaults list data:
 
 ```typescript
-const rewardsData = useRewardsData(address);
-// Returns: { rewardBalance, rewardToken, rewardTokenSymbol }
+const vaultsList = useVaultsList();
+// Returns: { vaults, loading, error }
+```
+
+### useVaultDetail
+
+Fetches detailed vault information:
+
+```typescript
+const vaultDetail = useVaultDetail(vaultId);
+// Returns: { vault, loading, error }
+```
+
+### useMarketsOperations
+
+Handles all market operations (deposit, withdraw, approve):
+
+```typescript
+const marketOps = useMarketsOperations(address);
+// Returns: { amount, setAmount, handleDeposit, handleWithdraw, handleApprove, ... }
 ```
 
 ### useVaultOperations
 
-Handles all vault operations (deposit, withdraw, approve):
+Handles vault-specific operations:
 
 ```typescript
 const vaultOps = useVaultOperations(address);
-// Returns: { amount, setAmount, handleDeposit, handleWithdraw, handleApprove, ... }
+// Returns: { handleDeposit, handleWithdraw, handleApprove, ... }
 ```
 
 ### useRewardsOperations
@@ -121,11 +187,11 @@ const rewardsOps = useRewardsOperations();
 // Returns: { handleClaimReward, isClaiming, claimError, ... }
 ```
 
-## 5. Reading Vault Data
+## 5. Reading Market Data
 
 ### Fetch User Position
 
-Get the user's current position in the vault:
+Get the user's current position in the market:
 
 ```typescript
 const fetchUserPosition = async (userAddress: string) => {
@@ -162,7 +228,7 @@ const fetchUserPosition = async (userAddress: string) => {
     const vaultItem = items?.find(
       (item) =>
         item.vault?.address?.toLowerCase() ===
-        MORPHO_USDC_VAULT_ADDRESS.toLowerCase()
+        MORPHO_MARKETS_ADDRESS.toLowerCase()
     );
 
     if (vaultItem && vaultItem.state) {
@@ -189,7 +255,7 @@ const { address, isConnected } = useAccount();
 
 // Read USDC balance
 const { data: usdcBalance } = useReadContract({
-  address: USDC_ADDRESS as `0x${string}`,
+  address: MARKET_PARAMS.collateralToken as `0x${string}`,
   abi: ERC20_ABI,
   functionName: "balanceOf",
   args: address ? [address] : undefined,
@@ -198,7 +264,7 @@ const { data: usdcBalance } = useReadContract({
 
 // Read vault share balance
 const { data: vaultBalance } = useReadContract({
-  address: MORPHO_USDC_VAULT_ADDRESS as `0x${string}`,
+  address: CONTRACTS.MORPHO_MARKETS as `0x${string}`,
   abi: ERC4626_ABI,
   functionName: "balanceOf",
   args: address ? [address] : undefined,
@@ -207,10 +273,10 @@ const { data: vaultBalance } = useReadContract({
 
 // Read allowance
 const { data: allowance } = useReadContract({
-  address: USDC_ADDRESS as `0x${string}`,
+  address: MARKET_PARAMS.collateralToken as `0x${string}`,
   abi: ERC20_ABI,
   functionName: "allowance",
-  args: address ? [address, MORPHO_USDC_VAULT_ADDRESS] : undefined,
+  args: address ? [address, CONTRACTS.MORPHO_MARKETS] : undefined,
   query: { enabled: !!address },
 });
 ```
@@ -229,10 +295,10 @@ const {
 const handleApprove = async (amount: string) => {
   try {
     await writeApprove({
-      address: USDC_ADDRESS as `0x${string}`,
+      address: MARKET_PARAMS.collateralToken as `0x${string}`,
       abi: ERC20_ABI,
       functionName: "approve",
-      args: [MORPHO_USDC_VAULT_ADDRESS, parseUnits(amount, 6)], // USDC has 6 decimals
+      args: [CONTRACTS.MORPHO_MARKETS, parseUnits(amount, 6)], // USDC has 6 decimals
     });
   } catch (error) {
     console.error("Approval failed:", error);
@@ -248,7 +314,7 @@ const needsApproval = (amount: string) => {
 
 ## 7. Deposit Operations
 
-Deposit assets into the Morpho vault:
+Deposit assets into the Morpho market:
 
 ```typescript
 const {
@@ -260,7 +326,7 @@ const {
 const handleDeposit = async (amount: string) => {
   try {
     await writeDeposit({
-      address: MORPHO_USDC_VAULT_ADDRESS as `0x${string}`,
+      address: CONTRACTS.MORPHO_MARKETS as `0x${string}`,
       abi: ERC4626_ABI,
       functionName: "deposit",
       args: [parseUnits(amount, 6), address], // assets, receiver
@@ -273,7 +339,7 @@ const handleDeposit = async (amount: string) => {
 
 ## 8. Withdraw Operations
 
-Withdraw assets from the Morpho vault:
+Withdraw assets from the Morpho market:
 
 ```typescript
 const {
@@ -285,7 +351,7 @@ const {
 const handleWithdraw = async (amount: string) => {
   try {
     await writeWithdraw({
-      address: MORPHO_USDC_VAULT_ADDRESS as `0x${string}`,
+      address: CONTRACTS.MORPHO_MARKETS as `0x${string}`,
       abi: ERC4626_ABI,
       functionName: "withdraw",
       args: [
@@ -300,50 +366,14 @@ const handleWithdraw = async (amount: string) => {
 };
 ```
 
-## 10. Network Configuration
-
-Base network (Chain ID: 8453):
-
-- **USDC Token**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
-- **Morpho USDC Vault**: `0x7BfA7C4f149E7415b73bdeDfe609237e29CBF34A`
-- **Morpho GraphQL API**: `https://api.morpho.org/graphql`
-
-## 11. Transaction Flow Summary
-
-1. User connects via Dynamic MPC wallet
-2. Select deposit or withdraw mode
-3. Enter the amount to deposit/withdraw
-4. Check and handle token approvals (deposit only)
-5. Execute vault transaction via ERC-4626 interface
-6. Display transaction status and updated balances
-7. Query GraphQL API for real-time position data
-
-## 12. Getting Started
-
-First, run the development server:
-
-```bash
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## 13. Key Features
-
-- **ERC-4626 Compliance** - Standard vault interface for deposits/withdrawals
-- **Real-time Data** - GraphQL API integration for live vault metrics
-- **Optimized Yields** - Morpho's lending optimization algorithms
-- **Non-custodial** - Dynamic MPC wallets maintain user control
-
 ## 9. Rewards Integration
 
-Morpho vaults distribute MORPHO tokens as rewards to users who provide liquidity. This integration includes:
+Morpho markets distribute MORPHO tokens as rewards to users who provide liquidity. This integration includes:
 
 ### Rewards Contract Configuration
 
 ```typescript
-const REWARDS_DISTRIBUTOR_ADDRESS =
-  "0x3B14E5C73e0a56D607A8688098326fD4b4292135";
+const REWARDS_DISTRIBUTOR_ADDRESS = CONTRACTS.REWARDS_DISTRIBUTOR;
 ```
 
 ### Reading Reward Balances
@@ -351,19 +381,19 @@ const REWARDS_DISTRIBUTOR_ADDRESS =
 ```typescript
 // Read user's reward balance
 const { data: userRewardBalance } = useReadContract({
-  address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+  address: CONTRACTS.REWARDS_DISTRIBUTOR as `0x${string}`,
   abi: REWARDS_ABI,
   functionName: "getUserRewardBalance",
-  args: address ? [address, MORPHO_USDC_VAULT_ADDRESS] : undefined,
+  args: address ? [address, CONTRACTS.MORPHO_MARKETS] : undefined,
   query: { enabled: !!address },
 });
 
 // Read reward token information
 const { data: rewardTokenAddress } = useReadContract({
-  address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+  address: CONTRACTS.REWARDS_DISTRIBUTOR as `0x${string}`,
   abi: REWARDS_ABI,
   functionName: "getRewardToken",
-  args: [MORPHO_USDC_VAULT_ADDRESS],
+  args: [CONTRACTS.MORPHO_MARKETS],
 });
 
 const { data: rewardTokenSymbol } = useReadContract({
@@ -386,10 +416,10 @@ const {
 const handleClaimReward = async () => {
   try {
     await writeClaimReward({
-      address: REWARDS_DISTRIBUTOR_ADDRESS as `0x${string}`,
+      address: CONTRACTS.REWARDS_DISTRIBUTOR as `0x${string}`,
       abi: REWARDS_ABI,
       functionName: "claimReward",
-      args: [MORPHO_USDC_VAULT_ADDRESS],
+      args: [CONTRACTS.MORPHO_MARKETS],
     });
   } catch (error) {
     console.error("Claim failed:", error);
@@ -404,6 +434,46 @@ The interface displays:
 - Current reward balance in MORPHO tokens
 - Claim button (only shown when rewards > 0)
 - Real-time updates after successful claims
+
+## 10. Network Configuration
+
+Base network (Chain ID: 8453):
+
+- **WETH Token**: `0x4200000000000000000000000000000000000006`
+- **USDC Token**: `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
+- **Morpho Markets**: `0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb`
+- **Rewards Distributor**: `0x3B14E5C73e0a56D607A8688098326fD4b4292135`
+- **Morpho GraphQL API**: `https://api.morpho.org/graphql`
+
+## 11. Transaction Flow Summary
+
+1. User connects via Dynamic MPC wallet
+2. Navigate to earn or borrow page
+3. Select deposit or withdraw mode
+4. Enter the amount to deposit/withdraw
+5. Check and handle token approvals (deposit only)
+6. Execute market transaction via ERC-4626 interface
+7. Display transaction status and updated balances
+8. Query GraphQL API for real-time position data
+
+## 12. Getting Started
+
+First, run the development server:
+
+```bash
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 13. Key Features
+
+- **ERC-4626 Compliance** - Standard vault interface for deposits/withdrawals
+- **Real-time Data** - GraphQL API integration for live market metrics
+- **Optimized Yields** - Morpho's lending optimization algorithms
+- **Non-custodial** - Dynamic MPC wallets maintain user control
+- **Multi-page Navigation** - Separate earn and borrow interfaces
+- **Modular Components** - Reusable UI components for different sections
 
 ## 14. References
 

@@ -88,41 +88,41 @@ export function useVaultsList(sortBy: SortOption = "netApy-desc") {
     return parseFloat(cleanValue) || 0;
   };
 
-  // Sorting function
-  const sortVaults = (vaultsToSort: Vault[]): Vault[] => {
-    return [...vaultsToSort].sort((a, b) => {
-      switch (sortBy) {
-        case "netApy-desc":
-          return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
-
-        case "apy-desc":
-          return parseNumericValue(b.apy) - parseNumericValue(a.apy);
-
-        case "tvl-desc":
-          return parseTVL(b.tvl) - parseTVL(a.tvl);
-
-        case "whitelisted-desc":
-          // Sort whitelisted vaults first, then by net APY
-          if (a.whitelisted !== b.whitelisted) {
-            return a.whitelisted ? -1 : 1;
-          }
-          return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
-
-        case "totalSupply-desc":
-          return (
-            parseNumericValue(b.totalSupply) - parseNumericValue(a.totalSupply)
-          );
-
-        case "name-asc":
-          return a.name.localeCompare(b.name);
-
-        default:
-          return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
-      }
-    });
-  };
-
   useEffect(() => {
+    // Sorting function
+    const sortVaults = (vaultsToSort: Vault[]): Vault[] => {
+      return [...vaultsToSort].sort((a, b) => {
+        switch (sortBy) {
+          case "netApy-desc":
+            return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
+
+          case "apy-desc":
+            return parseNumericValue(b.apy) - parseNumericValue(a.apy);
+
+          case "tvl-desc":
+            return parseTVL(b.tvl) - parseTVL(a.tvl);
+
+          case "whitelisted-desc":
+            // Sort whitelisted vaults first, then by net APY
+            if (a.whitelisted !== b.whitelisted) {
+              return a.whitelisted ? -1 : 1;
+            }
+            return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
+
+          case "totalSupply-desc":
+            return (
+              parseNumericValue(b.totalSupply) - parseNumericValue(a.totalSupply)
+            );
+
+          case "name-asc":
+            return a.name.localeCompare(b.name);
+
+          default:
+            return parseNumericValue(b.netApy) - parseNumericValue(a.netApy);
+        }
+      });
+    };
+
     async function fetchVaults() {
       try {
         setLoading(true);
@@ -256,7 +256,7 @@ export function useVaultsList(sortBy: SortOption = "netApy-desc") {
     }
 
     fetchVaults();
-  }, [sortBy]); // Add sortBy to dependency array
+  }, [sortBy]); // sortVaults is now inside useEffect
 
   return { vaults, loading, error };
 }

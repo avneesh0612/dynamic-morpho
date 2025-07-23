@@ -1,5 +1,3 @@
-export { useVaultData } from "./useVaultData";
-export { useRewardsData } from "./useRewardsData";
 export { useVaultOperations } from "./useVaultOperations";
 export { useRewardsOperations } from "./useRewardsOperations";
 export { useMarketsData } from "./useMarketsData";
